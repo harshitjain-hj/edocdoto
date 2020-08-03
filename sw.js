@@ -1,4 +1,4 @@
-const staticCacheName = 'site-static-v1';
+const staticCacheName = 'site-static-v2';
 const dynamicCacheName = 'site-dynamic-v1';
 const assets = [
   '/',
@@ -10,7 +10,8 @@ const assets = [
   'css/materialize.min.css',
   'img/dish.png',
   'https://fonts.googleapis.com/icon?family=Material+Icons',
-  'https://fonts.gstatic.com/s/materialicons/v54/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2'
+  'https://fonts.gstatic.com/s/materialicons/v54/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2',
+  'pages/offline.html'
 ];
 
 // install service worker
@@ -25,7 +26,7 @@ self.addEventListener('install', evt => {
     );
   });
 
-// activate service worker
+// activatcce service worker
 self.addEventListener('activate', evt => {
     // console.log("service worker has been activated");
     // deleting all older cache
@@ -33,7 +34,7 @@ self.addEventListener('activate', evt => {
         caches.keys().then(keys => {
             // console.log(keys);
             return Promise.all(keys
-                .filter(key => key !== staticCacheName)
+                .filter(key => key !== staticCacheName && key !== dynamicCacheName)
                 .map(key => caches.delete(key))   
             )
         })
@@ -51,7 +52,11 @@ self.addEventListener('fetch', evt => {
                     cache.put(evt.request.url, fetchRes.clone());
                     return fetchRes;
                 })
-            });
+            }); // incase pages are not in cache
+        }).catch(() => {
+            if(evt.request.url.indexOf('.html') > -1) {
+                return caches.match('pages/offline.html')
+            }
         })
     );
 });
